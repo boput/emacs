@@ -87,6 +87,12 @@
       show-paren-when-point-inside-paren t
       show-paren-when-point-in-periphery t)
 
+;;; Compilation
+
+(setq compilation-always-kill t
+      compilation-ask-about-save nil
+      compilation-scroll-output 'first-error)
+
 ;;; Misc
 
 (setq custom-buffer-done-kill t)
@@ -141,17 +147,8 @@
 
 (setq uniquify-buffer-name-style 'forward)
 
-;;; comint (general command interpreter in a window)
-
-(setq ansi-color-for-comint-mode t
-      comint-prompt-read-only t
-      comint-buffer-maximum-size 4096)
-
-;;; Compilation
-
-(setq compilation-ask-about-save nil
-      compilation-always-kill t
-      compilation-scroll-output 'first-error)
+(setq comint-prompt-read-only t)
+(setq comint-buffer-maximum-size 2048)
 
 ;; Skip confirmation prompts when creating a new file or buffer
 (setq confirm-nonexistent-file-or-buffer nil)
@@ -217,7 +214,7 @@
 ;; `recentf' is an that maintains a list of recently accessed files.
 (setq recentf-max-saved-items 300) ; default is 20
 (setq recentf-max-menu-items 15)
-(setq recentf-auto-cleanup 'mode)
+(setq recentf-auto-cleanup (if (daemonp) 300 'never))
 
 ;; Update recentf-exclude
 (setq recentf-exclude (list "^/\\(?:ssh\\|su\\|sudo\\)?:"))
@@ -303,8 +300,7 @@
 
 ;; The blinking cursor is distracting and interferes with cursor settings in
 ;; some minor modes that try to change it buffer-locally (e.g., Treemacs).
-(when (bound-and-true-p blink-cursor-mode)
-  (blink-cursor-mode -1))
+(blink-cursor-mode -1)
 
 ;; Don't blink the paren matching the one at point, it's too distracting.
 (setq blink-matching-paren nil)
@@ -419,6 +415,18 @@
 ;; dired-omit-mode
 (setq dired-omit-verbose nil)
 (setq dired-omit-files (concat "\\`[.]\\'"))
+
+;; Group directories first
+(when minimal-emacs-dired-group-directories-first
+  (with-eval-after-load 'dired
+    (let ((args "--group-directories-first -ahlv"))
+      (when (or (eq system-type 'darwin)
+                (eq system-type 'berkeley-unix))
+        (if-let* ((gls (executable-find "gls")))
+            (setq insert-directory-program gls)
+          (setq args nil)))
+      (when args
+        (setq dired-listing-switches args)))))
 
 (setq ls-lisp-verbosity nil)
 (setq ls-lisp-dirs-first t)
